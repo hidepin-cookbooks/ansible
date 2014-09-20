@@ -1,0 +1,13 @@
+---
+- hosts: all
+  sudo: yes
+  remote_user: vagrant
+  vars:
+    username: newuser
+    group: vagrant
+    shell:
+      bash: /bin/bash
+      zsh: /bin/zsh
+  tasks:
+    - name: ユーザを追加
+      user: name={{username}} group={{group}} shell={{shell.bash}}
