@@ -27,9 +27,21 @@
         - httpd
         - zsh
 
+    - name: rpmデータ
+      command: rpm -q jdk
+      register: inst_jdk
+      ignore_errors: yes
+
+    - debug: var=inst_jdk
+
     - name: jdkをコピー
       copy: src=rpms/{{jdk}} dest=/tmp
       notify: jdkのインストール
+      when: inst_jdk.rc == 1
+
+    - name: jdkのインストール
+      yum: name=/tmp/{{jdk}} state=present
+      when: inst_jdk.rc == 1
 
     - name: testファイルをコピー
       copy: src=files/sample.txt dest=/tmp backup=yes
@@ -40,7 +52,3 @@
     - name: Print phone records
       user: name={{ item.key }} comment={{item.value.name}}
       with_dict: users
-
-  handlers:
-    - name: jdkのインストール
-      yum: name=/tmp/{{jdk}} state=present
