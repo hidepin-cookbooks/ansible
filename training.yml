@@ -2,12 +2,45 @@
 - hosts: all
   sudo: yes
   remote_user: vagrant
+  vars_files:
+    - vars/user.yml
   vars:
-    username: newuser
-    group: vagrant
     shell:
       bash: /bin/bash
       zsh: /bin/zsh
+    jdk: jdk-7u67-linux-x64.rpm
+    users:
+      ged:
+        name: Hawk
+      arha:
+        name: Tenar
   tasks:
     - name: ユーザを追加
       user: name={{username}} group={{group}} shell={{shell.bash}}
+
+    - name: authorized_keyを追加
+      authorized_key: user={{username}} key="{{lookup('file', '~/.ssh/id_dsa.pub')}}"
+
+    - name: rpmをインストール
+      yum: name={{ item }} state=latest
+      with_items:
+        - httpd
+        - zsh
+
+    - name: jdkをコピー
+      copy: src=rpms/{{jdk}} dest=/tmp
+      notify: jdkのインストール
+
+    - name: testファイルをコピー
+      copy: src=files/sample.txt dest=/tmp backup=yes
+
+    - name: ファイルの取得
+      fetch: src=/tmp/sample.txt dest=./backup
+
+    - name: Print phone records
+      user: name={{ item.key }} comment={{item.value.name}}
+      with_dict: users
+
+  handlers:
+    - name: jdkのインストール
+      yum: name=/tmp/{{jdk}} state=present
